@@ -19,7 +19,6 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         dtypes = [torch.FloatTensor]*len(input_size)
 
     summary_str = ''
-
     def register_hook(module):
         def hook(module, input, output):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
@@ -38,9 +37,14 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
                 summary[m_key]["output_shape"][0] = batch_size
 
             params = 0
-            if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                summary[m_key]["trainable"] = module.weight.requires_grad
+            ## UPDATE 
+            for (name,weight) in module.named_parameters():
+                params += torch.prod(torch.LongTensor(list(weight.shape)))
+                summary[m_key]["trainable"] = weight.requires_grad
+            ## Previously 
+            # if hasattr(module, "weight") and hasattr(module.weight, "size"):
+            #     params += torch.prod(torch.LongTensor(list(module.weight.size())))
+            #     summary[m_key]["trainable"] = module.weight.requires_grad
             if hasattr(module, "bias") and hasattr(module.bias, "size"):
                 params += torch.prod(torch.LongTensor(list(module.bias.size())))
             summary[m_key]["nb_params"] = params
